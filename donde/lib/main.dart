@@ -10,7 +10,13 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Donde', theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)), home: const LoginScreen());
+    return MaterialApp(
+      title: 'Donde',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
+      home: const LoginScreen(),
+    );
   }
 }
 
@@ -23,14 +29,23 @@ class ApiClient {
   Future<bool> loginFast(String codigo, String password) async {
     final url = Uri.parse('$base:3000/');
     final r = await http
-        .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'codigo': codigo, 'password': password}))
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'codigo': codigo, 'password': password}),
+        )
         .timeout(const Duration(seconds: 12));
     return r.statusCode == 200;
   }
+
   Future<List<dynamic>> fetchSchedule(String codigo, String password) async {
     final url = Uri.parse('$base:3000/');
     final r = await http
-        .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'codigo': codigo, 'password': password}))
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'codigo': codigo, 'password': password}),
+        )
         .timeout(const Duration(seconds: 65));
     if (r.statusCode != 200) return [];
     final body = r.body.trim();
@@ -50,16 +65,132 @@ class ApiClient {
     } catch (_) {}
     return [];
   }
-  Future<List<dynamic>> labsByCodigo(String codigo, {String? jsonPath, String? dirPath, String? token}) async {
+
+  Future<List<dynamic>> labsByCodigo(
+    String codigo, {
+    String? jsonPath,
+    String? dirPath,
+    String? token,
+  }) async {
     try {
-      final url = Uri.parse('$base:3000/labs');
+      final url = Uri.parse('$base:3001/map');
       final payload = {'codigo': codigo};
       final r = await http
-          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload))
-          .timeout(const Duration(seconds: 8));
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 60));
       if (r.statusCode != 200) return [];
       final j = jsonDecode(r.body);
-      return (j['data'] ?? []) as List<dynamic>;
+      final d = j is Map<String, dynamic> ? j['data'] : j;
+      return d is List ? d : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<Map<String, Map<String, String>>> labsMap(String codigo) async {
+    try {
+      final url = Uri.parse('$base:3001/map');
+      final r = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'codigo': codigo}),
+          )
+          .timeout(const Duration(seconds: 60));
+      if (r.statusCode != 200) return {};
+      final j = jsonDecode(r.body);
+      final list = j is Map<String, dynamic> ? j['data'] : j;
+      final out = <String, Map<String, String>>{};
+      if (list is List) {
+        for (final it in list) {
+          if (it is Map<String, dynamic>) {
+            final code = (it['codigo'] ?? it['code'] ?? '').toString().trim();
+            final labs = it['labs'];
+            if (code.isNotEmpty && labs is Map) {
+              final m = <String, String>{};
+              labs.forEach((k, v) {
+                final kk = k.toString().toLowerCase();
+                final vv = v?.toString() ?? '';
+                if (vv.isNotEmpty) m[kk] = vv;
+              });
+              out[code] = m;
+            }
+          }
+        }
+      }
+      return out;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<List<dynamic>> labsOrderedDays(
+    String codigo,
+    List<dynamic> horarios, {
+    String? password,
+  }) async {
+    Future<List<dynamic>> parse(http.Response r) async {
+      if (r.statusCode != 200) return [];
+      final j = jsonDecode(r.body);
+      final d = j is Map<String, dynamic> ? j['data'] : j;
+      return d is List ? d : [];
+    }
+
+    final payloadFull = {
+      'codigo': codigo,
+      'horarios': horarios,
+      if (password != null) 'password': password,
+    };
+    final payloadCodeOnly = {
+      'codigo': codigo,
+      if (password != null) 'password': password,
+    };
+    try {
+      var url = Uri.parse('$base:3001/map-json-ordered');
+      var r = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payloadFull),
+          )
+          .timeout(const Duration(seconds: 60));
+      var out = await parse(r);
+      if (out.isNotEmpty) return out;
+      if (r.statusCode == 400 || r.statusCode == 405) {
+        r = await http
+            .post(
+              url,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(payloadCodeOnly),
+            )
+            .timeout(const Duration(seconds: 60));
+        out = await parse(r);
+        if (out.isNotEmpty) return out;
+      }
+      url = Uri.parse('$base:3001/map');
+      r = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payloadFull),
+          )
+          .timeout(const Duration(seconds: 60));
+      out = await parse(r);
+      if (out.isNotEmpty) return out;
+      r = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payloadCodeOnly),
+          )
+          .timeout(const Duration(seconds: 60));
+      out = await parse(r);
+      if (out.isNotEmpty) return out;
+      return [];
     } catch (_) {
       return [];
     }
@@ -99,21 +230,52 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     if (!mounted) return;
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ScheduleScreen(api: api, codigo: codigoCtl.text.trim(), password: passwordCtl.text.trim())));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ScheduleScreen(
+          api: api,
+          codigo: codigoCtl.text.trim(),
+          password: passwordCtl.text.trim(),
+        ),
+      ),
+    );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Donde')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(children: [
-          TextField(controller: codigoCtl, decoration: const InputDecoration(labelText: 'Código')),
-          TextField(controller: passwordCtl, decoration: const InputDecoration(labelText: 'Contraseña'), obscureText: true),
-          const SizedBox(height: 16),
-          ElevatedButton(onPressed: loading ? null : submit, child: loading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Ingresar')),
-          if (error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(error!, style: const TextStyle(color: Colors.red)))
-        ]),
+        child: Column(
+          children: [
+            TextField(
+              controller: codigoCtl,
+              decoration: const InputDecoration(labelText: 'Código'),
+            ),
+            TextField(
+              controller: passwordCtl,
+              decoration: const InputDecoration(labelText: 'Contraseña'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: loading ? null : submit,
+              child: loading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Ingresar'),
+            ),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(error!, style: const TextStyle(color: Colors.red)),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -136,17 +298,19 @@ class _LabsScreenState extends State<LabsScreen> {
     super.initState();
     load();
   }
+
   Future<void> load() async {
     setState(() {
       loading = true;
       error = null;
     });
-    final res = await widget.api.labsByCodigo(widget.codigo, jsonPath: 'C\\\\Users\\\\Angel\\\\Desktop\\\\EADVARGAS\\\\Downloads\\\\horarios\\\\horarios.json');
+    final res = await widget.api.labsByCodigo(widget.codigo);
     setState(() {
       data = res;
       loading = false;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,8 +322,12 @@ class _LabsScreenState extends State<LabsScreen> {
               itemBuilder: (context, i) {
                 final item = data[i] as Map<String, dynamic>;
                 return ListTile(
-                  title: Text('${item['codigo'] ?? ''} ${item['curso'] ?? item['asignatura'] ?? ''}'),
-                  subtitle: Text('Lunes: ${item['lunes'] ?? ''}\nMartes: ${item['martes'] ?? ''}\nMiércoles: ${item['miércoles'] ?? item['miercoles'] ?? ''}\nJueves: ${item['jueves'] ?? ''}\nViernes: ${item['viernes'] ?? ''}\nSábado: ${item['sábado'] ?? item['sabado'] ?? ''}\nDomingo: ${item['domingo'] ?? ''}'),
+                  title: Text(
+                    '${item['codigo'] ?? ''} ${item['curso'] ?? item['asignatura'] ?? ''}',
+                  ),
+                  subtitle: Text(
+                    'Lunes: ${item['lunes'] ?? ''}\nMartes: ${item['martes'] ?? ''}\nMiércoles: ${item['miércoles'] ?? item['miercoles'] ?? ''}\nJueves: ${item['jueves'] ?? ''}\nViernes: ${item['viernes'] ?? ''}\nSábado: ${item['sábado'] ?? item['sabado'] ?? ''}\nDomingo: ${item['domingo'] ?? ''}',
+                  ),
                 );
               },
             ),
@@ -171,7 +339,12 @@ class ScheduleScreen extends StatefulWidget {
   final ApiClient api;
   final String codigo;
   final String password;
-  const ScheduleScreen({super.key, required this.api, required this.codigo, required this.password});
+  const ScheduleScreen({
+    super.key,
+    required this.api,
+    required this.codigo,
+    required this.password,
+  });
   @override
   State<ScheduleScreen> createState() => _ScheduleScreenState();
 }
@@ -187,13 +360,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     super.initState();
     load();
   }
+
   Future<void> load() async {
     setState(() {
       loading = true;
       error = null;
     });
     try {
-      final res = await widget.api.fetchSchedule(widget.codigo, widget.password);
+      final res = await widget.api.fetchSchedule(
+        widget.codigo,
+        widget.password,
+      );
       setState(() {
         horarios = res;
       });
@@ -206,28 +383,64 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
       loading = false;
     });
   }
+
   void computeLabs() async {
     setState(() {
       computing = true;
     });
-    final res = _computeLabs(horarios);
+    final ordered = await widget.api.labsOrderedDays(
+      widget.codigo,
+      horarios,
+      password: widget.password,
+    );
+    if (ordered.isNotEmpty) {
+      setState(() {
+        computing = false;
+      });
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => LabsOrderedScreen(days: ordered)),
+      );
+      return;
+    }
+    Map<String, Map<String, String>> res = await widget.api.labsMap(
+      widget.codigo,
+    );
+    if (res.isEmpty) {
+      res = _computeLabs(horarios);
+    }
     setState(() {
       labs = res;
       computing = false;
     });
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => LabsResultScreen(labs: labs)));
+    if (!mounted) return;
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => LabsResultScreen(labs: labs)));
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Horario ${widget.codigo}'), actions: [
-        TextButton(onPressed: !loading && horarios.isNotEmpty && !computing ? computeLabs : null, child: Text('Laboratorio', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary)))
-      ]),
+      appBar: AppBar(
+        title: Text('Horario ${widget.codigo}'),
+        actions: [
+          TextButton(
+            onPressed: !loading && horarios.isNotEmpty && !computing
+                ? () => computeLabs()
+                : null,
+            child: Text(
+              'Laboratorio',
+              style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+            ),
+          ),
+        ],
+      ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : (error != null
-              ? Center(child: Text(error!))
-              : _ScheduleView(horarios: horarios)),
+                ? Center(child: Text(error!))
+                : _ScheduleView(horarios: horarios)),
     );
   }
 }
@@ -240,11 +453,64 @@ class LabsResultScreen extends StatelessWidget {
     final entries = labs.entries.toList();
     return Scaffold(
       appBar: AppBar(title: const Text('Laboratorios')),
+      body: entries.isEmpty
+          ? const Center(child: Text('Sin laboratorios para mostrar'))
+          : ListView.builder(
+              itemCount: entries.length,
+              itemBuilder: (context, i) {
+                final code = entries[i].key;
+                final byDay = entries[i].value;
+                return Card(
+                  margin: const EdgeInsets.all(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          code,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: byDay.entries
+                              .map(
+                                (e) => Chip(
+                                  label: Text(
+                                    '${_capitalize(e.key)}: ${e.value}',
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+class LabsOrderedScreen extends StatelessWidget {
+  final List<dynamic> days;
+  const LabsOrderedScreen({super.key, required this.days});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Laboratorios (Ordenado)')),
       body: ListView.builder(
-        itemCount: entries.length,
+        itemCount: days.length,
         itemBuilder: (context, i) {
-          final code = entries[i].key;
-          final byDay = entries[i].value;
+          final d = days[i] as Map<String, dynamic>;
+          final dayName = (d['dia'] ?? '').toString();
+          final items = (d['items'] ?? []) as List<dynamic>;
           return Card(
             margin: const EdgeInsets.all(12),
             child: Padding(
@@ -252,9 +518,95 @@ class LabsResultScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(code, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  Wrap(spacing: 8, runSpacing: 8, children: byDay.entries.map((e) => Chip(label: Text('${_capitalize(e.key)}: ${e.value}'))).toList())
+                  Text(
+                    dayName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...items.map((it) {
+                    final m = (it as Map<String, dynamic>);
+                    final code = (m['codigo'] ?? '').toString();
+                    final course = (m['curso'] ?? '').toString();
+                    final teacher = (m['docente'] ?? '').toString();
+                    final hour = (m['hora'] ?? '').toString();
+                    String labText = '';
+                    final lugares = m['lugares'];
+                    if (lugares is List) {
+                      final parts = lugares
+                          .map((e) => e?.toString() ?? '')
+                          .where((s) => s.isNotEmpty)
+                          .toList();
+                      final labLike = parts.firstWhere(
+                        (s) =>
+                            RegExp(r'^LAB\s+[A-Z]$').hasMatch(s) ||
+                            RegExp(r'^P-\d+$').hasMatch(s),
+                        orElse: () => '',
+                      );
+                      labText = labLike.isNotEmpty
+                          ? labLike
+                          : (parts.isNotEmpty ? parts.join(' ') : '');
+                    } else {
+                      labText =
+                          (m['lab'] ??
+                                  m['aula'] ??
+                                  m['lugar'] ??
+                                  m['lugares'] ??
+                                  '')
+                              .toString();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  '$code $course',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  hour,
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Chip(
+                                label: Text(labText.isEmpty ? '-' : labText),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(Icons.person_outline, size: 16),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  teacher,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 18),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -276,26 +628,49 @@ class _ScheduleView extends StatelessWidget {
         final h = horarios[i] as Map<String, dynamic>;
         final code = (h['codigo'] ?? '').toString();
         final course = (h['curso'] ?? h['asignatura'] ?? '').toString();
-        final days = ['lunes','martes','miércoles','miercoles','jueves','viernes','sábado','sabado','domingo'];
+        final days = [
+          'lunes',
+          'martes',
+          'miércoles',
+          'miercoles',
+          'jueves',
+          'viernes',
+          'sábado',
+          'sabado',
+          'domingo',
+        ];
         return Card(
           margin: const EdgeInsets.all(12),
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('$code $course', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Column(children: days.map((d) {
-                final v = (h[d] ?? '').toString();
-                if (v.isEmpty) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(children: [
-                    SizedBox(width: 110, child: Text(_capitalize(d))),
-                    Expanded(child: Text(v))
-                  ]),
-                );
-              }).toList())
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$code $course',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Column(
+                  children: days.map((d) {
+                    final v = (h[d] ?? '').toString();
+                    if (v.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          SizedBox(width: 110, child: Text(_capitalize(d))),
+                          Expanded(child: Text(v)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -310,16 +685,38 @@ Map<String, Map<String, String>> _computeLabs(List<dynamic> horarios) {
     final code = (h['codigo'] ?? '').toString().trim();
     if (code.isEmpty) continue;
     final labs = <String, String>{};
-    for (final dia in ['lunes','martes','miércoles','miercoles','jueves','viernes','sábado','sabado','domingo']) {
-      final txt = (h[dia] ?? '').toString();
-      if (txt.isEmpty) continue;
-      final labReg = RegExp(r'\bLAB\s+[A-Z]\b');
-      final pReg = RegExp(r'\bP-\d+\b');
-      final a = labReg.allMatches(txt).map((m) => m.group(0)!).toList();
-      final b = a.isEmpty ? pReg.allMatches(txt).map((m) => m.group(0)!).toList() : a;
-      if (b.isNotEmpty) labs[dia] = b.join(' - ');
+    if (h.containsKey('dia') && (h['aula'] != null || h['lugar'] != null)) {
+      final dname = (h['dia'] ?? '').toString().toLowerCase();
+      final val = (h['aula'] ?? h['lugar'] ?? '').toString();
+      if (val.isNotEmpty && dname.isNotEmpty) labs[dname] = val;
+    } else {
+      for (final dia in [
+        'lunes',
+        'martes',
+        'miércoles',
+        'miercoles',
+        'jueves',
+        'viernes',
+        'sábado',
+        'sabado',
+        'domingo',
+      ]) {
+        final txt = (h[dia] ?? '').toString();
+        if (txt.isEmpty) continue;
+        final labReg = RegExp(r'\bLAB\s+[A-Z]\b');
+        final pReg = RegExp(r'\bP-\d+\b');
+        final a = labReg.allMatches(txt).map((m) => m.group(0)!).toList();
+        final b = a.isEmpty
+            ? pReg.allMatches(txt).map((m) => m.group(0)!).toList()
+            : a;
+        if (b.isNotEmpty) labs[dia] = b.join(' - ');
+      }
     }
-    if (labs.isNotEmpty) out[code] = labs;
+    if (labs.isNotEmpty) {
+      final cur = out[code] ?? <String, String>{};
+      cur.addAll(labs);
+      out[code] = cur;
+    }
   }
   return out;
 }

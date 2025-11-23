@@ -209,13 +209,40 @@ def parse_labs(html):
         labs_by_code[codigo] = labs
     return labs_by_code
 
-def load_scraped_json(codigo, path=None):
+def load_scraped_json(codigo, path=None, password=None):
     if path is None:
         path = os.path.join("scripts", "horarios_json", f"{codigo}.json")
-    if not os.path.exists(path):
+    try:
+        if isinstance(path, str) and (path.startswith("http://") or path.startswith("https://")):
+            import urllib.request
+            def post_json(url):
+                req = urllib.request.Request(url, data=json.dumps({"codigo": codigo, "password": password or ""}).encode("utf-8"), headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}, method="POST")
+                with urllib.request.urlopen(req, timeout=75) as r:
+                    return r.read().decode("utf-8", errors="ignore")
+            data = post_json(path)
+            try:
+                j = json.loads(data)
+                if isinstance(j, list) and j and any("dia" in x or "aula" in x or "lugar" in x for x in j if isinstance(x, dict)):
+                    return j
+            except Exception:
+                pass
+            base = path.rstrip("/")
+            candidates = [base + "/json", base + "/horarios", base + "/horarios.json", base + "/schedule_json"]
+            for url in candidates:
+                try:
+                    data2 = post_json(url)
+                    j2 = json.loads(data2)
+                    if isinstance(j2, list):
+                        return j2
+                except Exception:
+                    continue
+            return []
+        if not os.path.exists(path):
+            return []
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
         return []
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 def merge_labs(horarios, labs_by_code):
     if horarios:
@@ -253,7 +280,7 @@ def main():
     arg2 = sys.argv[2] if len(sys.argv) > 2 else None
     token = None
     ruta_json = sys.argv[3] if len(sys.argv) > 3 else None
-    horarios = load_scraped_json(codigo, ruta_json)
+    horarios = load_scraped_json(codigo, ruta_json, arg2)
     labs_by_code = {}
     if arg2:
         if os.path.exists(arg2) and arg2.lower().endswith('.html'):
@@ -296,6 +323,8 @@ def main():
     if not labs_by_code and ruta_json and ruta_json.lower().endswith('.html') and os.path.exists(ruta_json):
         with open(ruta_json, 'r', encoding='utf-8', errors='ignore') as f:
             labs_by_code = parse_labs(f.read())
+    if not labs_by_code and isinstance(ruta_json, str) and (ruta_json.startswith('http://') or ruta_json.startswith('https://')):
+        labs_by_code = fetch_remote_labs(ruta_json, codigo)
     if not labs_by_code:
         labs_by_code = {}
         for h in horarios:
@@ -318,3 +347,29 @@ def main():
 
 if __name__ == "__main__":
     main()
+def fetch_remote_labs(base_url, codigo):
+    try:
+        import urllib.request
+        b = (base_url or '').rstrip('/')
+        for suf in ['/horarios', '/json', '/horarios.json', '/schedule_json']:
+            if b.endswith(suf):
+                b = b[: -len(suf)]
+                break
+        url = b + '/labs'
+        req = urllib.request.Request(url, data=json.dumps({'codigo': codigo}).encode('utf-8'), headers={'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'}, method='POST')
+        with urllib.request.urlopen(req, timeout=40) as r:
+            data = r.read().decode('utf-8', errors='ignore')
+            j = json.loads(data)
+            labs_list = j.get('data') if isinstance(j, dict) else j
+            labs_by_code = {}
+            if isinstance(labs_list, list):
+                for it in labs_list:
+                    if not isinstance(it, dict):
+                        continue
+                    code = it.get('codigo') or it.get('code') or ''
+                    labs = it.get('labs') or {}
+                    if isinstance(code, str) and isinstance(labs, dict):
+                        labs_by_code[code.strip()] = {str(k).lower(): str(v) for k, v in labs.items() if v}
+            return labs_by_code
+    except Exception:
+        return {}
