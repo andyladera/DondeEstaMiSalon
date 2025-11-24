@@ -238,7 +238,7 @@ class FloorPlanData {
     const MapNode(
       id: 'cross_center_lower',
       name: 'Cruce LAB A-E',
-      x: 350,
+      x: 1050,
       y: 800,
       type: NodeType.hallway,
     ),
@@ -608,13 +608,13 @@ class FloorPlanData {
     // RUTA 2: Cruce P→A → Cruce LAB A-E (horizontal inferior)
     MapEdge(
       from: _getNode('cross_p_to_a'),
-      to: _getNode('cross_center_lower'),
-      weight: _getNode('cross_p_to_a').distanceTo(_getNode('cross_center_lower')),
+      to: _getNode('lab_a'),
+      weight: _getNode('cross_p_to_a').distanceTo(_getNode('lab_a')),
     ),
     MapEdge(
-      from: _getNode('cross_center_lower'),
+      from: _getNode('lab_a'),
       to: _getNode('cross_p_to_a'),
-      weight: _getNode('cross_center_lower').distanceTo(_getNode('cross_p_to_a')),
+      weight: _getNode('lab_a').distanceTo(_getNode('cross_p_to_a')),
     ),
     
     // RUTA 3: Cruce P→A → Diagonal Up (sube hacia centro)
