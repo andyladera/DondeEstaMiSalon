@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'screens/map_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -478,15 +479,35 @@ class LabsResultScreen extends StatelessWidget {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: byDay.entries
-                              .map(
-                                (e) => Chip(
-                                  label: Text(
-                                    '${_capitalize(e.key)}: ${e.value}',
+                          children: [
+                            ...byDay.entries
+                                .map(
+                                  (e) => Chip(
+                                    label: Text(
+                                      '${_capitalize(e.key)}: ${e.value}',
+                                    ),
                                   ),
-                                ),
-                              )
-                              .toList(),
+                                )
+                                .toList(),
+                            // Botón para ver en el mapa
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => MapScreen(
+                                      destinationLabCode: code,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.map, size: 18),
+                              label: const Text('Ver en mapa'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -587,6 +608,22 @@ class LabsOrderedScreen extends StatelessWidget {
                               Chip(
                                 label: Text(labText.isEmpty ? '-' : labText),
                               ),
+                              if (labText.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.map, color: Colors.blue),
+                                  tooltip: 'Ver en mapa',
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => MapScreen(
+                                          destinationLabCode: labText,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 6),
