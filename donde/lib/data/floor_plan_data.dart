@@ -44,21 +44,21 @@ class FloorPlanData {
     const MapNode(
       id: 'lab_a',
       name: 'LAB A',
-      x: 380,
-      y: 750,
+      x: 400,
+      y: 800,
       type: NodeType.laboratory,
     ),
     const MapNode(
       id: 'lab_b',
       name: 'LAB B',
       x: 280,
-      y: 380,
+      y: 450,
       type: NodeType.laboratory,
     ),
     const MapNode(
       id: 'lab_c',
       name: 'LAB C',
-      x: 420,
+      x: 500,
       y: 600,
       type: NodeType.laboratory,
     ),
@@ -96,7 +96,7 @@ class FloorPlanData {
       id: 'lab_p307',
       name: 'P-307',
       x: 220,
-      y: 550,
+      y: 600,
       type: NodeType.laboratory,
     ),
     const MapNode(
@@ -195,8 +195,8 @@ class FloorPlanData {
     const MapNode(
       id: 'starting_point',
       name: 'Punto de Partida',
-      x: 150,
-      y: 700,
+      x: 250,
+      y: 900,
       type: NodeType.entrance,
     ),
     
@@ -205,7 +205,7 @@ class FloorPlanData {
       id: 'entrance_p',
       name: 'Entrada Bloque P',
       x: 80,
-      y: 800,
+      y: 700,
       type: NodeType.entrance,
     ),
     const MapNode(
@@ -220,7 +220,7 @@ class FloorPlanData {
     const MapNode(
       id: 'hall_p_lower',
       name: 'Pasillo P-301',
-      x: 240,
+      x: 250,
       y: 800,
       type: NodeType.hallway,
     ),
@@ -229,8 +229,8 @@ class FloorPlanData {
     const MapNode(
       id: 'cross_p_to_a',
       name: 'Cruce P→A',
-      x: 320,
-      y: 750,
+      x: 250,
+      y: 800,
       type: NodeType.hallway,
     ),
     
@@ -238,8 +238,8 @@ class FloorPlanData {
     const MapNode(
       id: 'cross_center_lower',
       name: 'Cruce LAB A-E',
-      x: 600,
-      y: 780,
+      x: 350,
+      y: 800,
       type: NodeType.hallway,
     ),
     
@@ -359,16 +359,7 @@ class FloorPlanData {
     ),
     
     // ========== ENTRADAS ==========
-    MapEdge(
-      from: _getNode('entrance_p'),
-      to: _getNode('hall_p_lower'),
-      weight: _getNode('entrance_p').distanceTo(_getNode('hall_p_lower')),
-    ),
-    MapEdge(
-      from: _getNode('hall_p_lower'),
-      to: _getNode('entrance_p'),
-      weight: _getNode('hall_p_lower').distanceTo(_getNode('entrance_p')),
-    ),
+    
     MapEdge(
       from: _getNode('entrance_r'),
       to: _getNode('cross_q312_entrance'),
@@ -380,19 +371,7 @@ class FloorPlanData {
       weight: _getNode('cross_q312_entrance').distanceTo(_getNode('entrance_r')),
     ),
 
-    // ========== LABORATORIOS PRINCIPALES ==========
-    // LAB A <-> Cruce LAB A-E (inferior)
-    MapEdge(
-      from: _getNode('lab_a'),
-      to: _getNode('cross_center_lower'),
-      weight: _getNode('lab_a').distanceTo(_getNode('cross_center_lower')),
-    ),
-    MapEdge(
-      from: _getNode('cross_center_lower'),
-      to: _getNode('lab_a'),
-      weight: _getNode('cross_center_lower').distanceTo(_getNode('lab_a')),
-    ),
-    
+    // ========== LABORATORIOS PRINCIPALES ==========    
     // LAB B <-> Cruce Upper Left
     MapEdge(
       from: _getNode('lab_b'),
@@ -427,18 +406,6 @@ class FloorPlanData {
       from: _getNode('cross_center'),
       to: _getNode('lab_d'),
       weight: _getNode('cross_center').distanceTo(_getNode('lab_d')),
-    ),
-    
-    // LAB E <-> Cruce LAB A-E (inferior)
-    MapEdge(
-      from: _getNode('lab_e'),
-      to: _getNode('cross_center_lower'),
-      weight: _getNode('lab_e').distanceTo(_getNode('cross_center_lower')),
-    ),
-    MapEdge(
-      from: _getNode('cross_center_lower'),
-      to: _getNode('lab_e'),
-      weight: _getNode('cross_center_lower').distanceTo(_getNode('lab_e')),
     ),
     
     // LAB F <-> Cruce R-303/LAB F
