@@ -248,7 +248,7 @@ class FloorPlanData {
       id: 'cross_diagonal_up',
       name: 'Diagonal Arriba',
       x: 420,
-      y: 600,
+      y: 450,
       type: NodeType.hallway,
     ),
     
@@ -256,8 +256,8 @@ class FloorPlanData {
     const MapNode(
       id: 'cross_center',
       name: 'Cruce Central',
-      x: 480,
-      y: 520,
+      x: 500,
+      y: 450,
       type: NodeType.hallway,
     ),
     
@@ -265,8 +265,8 @@ class FloorPlanData {
     const MapNode(
       id: 'cross_upper_left',
       name: 'Cruce P-312/LAB B',
-      x: 320,
-      y: 420,
+      x: 350,
+      y: 600,
       type: NodeType.hallway,
     ),
     
@@ -283,8 +283,8 @@ class FloorPlanData {
     const MapNode(
       id: 'cross_diagonal_right',
       name: 'Diagonal Derecha',
-      x: 720,
-      y: 550,
+      x: 680,
+      y: 450,
       type: NodeType.hallway,
     ),
     
@@ -372,18 +372,6 @@ class FloorPlanData {
     ),
 
     // ========== LABORATORIOS PRINCIPALES ==========    
-    // LAB B <-> Cruce Upper Left
-    MapEdge(
-      from: _getNode('lab_b'),
-      to: _getNode('cross_upper_left'),
-      weight: _getNode('lab_b').distanceTo(_getNode('cross_upper_left')),
-    ),
-    MapEdge(
-      from: _getNode('cross_upper_left'),
-      to: _getNode('lab_b'),
-      weight: _getNode('cross_upper_left').distanceTo(_getNode('lab_b')),
-    ),
-    
     // LAB C <-> Cruce Centro
     MapEdge(
       from: _getNode('lab_c'),
@@ -399,13 +387,13 @@ class FloorPlanData {
     // LAB D <-> Cruce Centro
     MapEdge(
       from: _getNode('lab_d'),
-      to: _getNode('cross_center'),
-      weight: _getNode('lab_d').distanceTo(_getNode('cross_center')),
+      to: _getNode('cross_diagonal_right'),
+      weight: _getNode('lab_d').distanceTo(_getNode('cross_diagonal_right')),
     ),
     MapEdge(
-      from: _getNode('cross_center'),
+      from: _getNode('cross_diagonal_right'),
       to: _getNode('lab_d'),
-      weight: _getNode('cross_center').distanceTo(_getNode('lab_d')),
+      weight: _getNode('cross_diagonal_right').distanceTo(_getNode('lab_d')),
     ),
     
     // LAB F <-> Cruce R-303/LAB F
@@ -433,28 +421,16 @@ class FloorPlanData {
       weight: _getNode('hall_p_lower').distanceTo(_getNode('lab_p301')),
     ),
     
-    // P-307 <-> Cruce Centro
-    MapEdge(
-      from: _getNode('lab_p307'),
-      to: _getNode('cross_center'),
-      weight: _getNode('lab_p307').distanceTo(_getNode('cross_center')),
-    ),
-    MapEdge(
-      from: _getNode('cross_center'),
-      to: _getNode('lab_p307'),
-      weight: _getNode('cross_center').distanceTo(_getNode('lab_p307')),
-    ),
-    
     // P-312A <-> Cruce Upper Left
     MapEdge(
-      from: _getNode('lab_p312a'),
+      from: _getNode('lab_p307'),
       to: _getNode('cross_upper_left'),
-      weight: _getNode('lab_p312a').distanceTo(_getNode('cross_upper_left')),
+      weight: _getNode('lab_p307').distanceTo(_getNode('cross_upper_left')),
     ),
     MapEdge(
       from: _getNode('cross_upper_left'),
-      to: _getNode('lab_p312a'),
-      weight: _getNode('cross_upper_left').distanceTo(_getNode('lab_p312a')),
+      to: _getNode('lab_p307'),
+      weight: _getNode('cross_upper_left').distanceTo(_getNode('lab_p307')),
     ),
     
     // P-312B <-> Cruce Upper Left
@@ -520,14 +496,14 @@ class FloorPlanData {
     
     // Q-312 <-> Cruce Q-312/Entrada R
     MapEdge(
-      from: _getNode('lab_q312'),
-      to: _getNode('cross_q312_entrance'),
-      weight: _getNode('lab_q312').distanceTo(_getNode('cross_q312_entrance')),
+      from: _getNode('cross_q307'),
+      to: _getNode('lab_e'),
+      weight: _getNode('cross_q307').distanceTo(_getNode('lab_e')),
     ),
     MapEdge(
-      from: _getNode('cross_q312_entrance'),
-      to: _getNode('lab_q312'),
-      weight: _getNode('cross_q312_entrance').distanceTo(_getNode('lab_q312')),
+      from: _getNode('lab_e'),
+      to: _getNode('cross_q307'),
+      weight: _getNode('lab_e').distanceTo(_getNode('cross_q307')),
     ),
 
     // ========== BLOQUE R ==========
@@ -620,13 +596,13 @@ class FloorPlanData {
     // RUTA 3: Cruce P→A → Diagonal Up (sube hacia centro)
     MapEdge(
       from: _getNode('cross_p_to_a'),
-      to: _getNode('cross_diagonal_up'),
-      weight: _getNode('cross_p_to_a').distanceTo(_getNode('cross_diagonal_up')),
+      to: _getNode('cross_upper_left'),
+      weight: _getNode('cross_p_to_a').distanceTo(_getNode('cross_upper_left')),
     ),
     MapEdge(
-      from: _getNode('cross_diagonal_up'),
+      from: _getNode('cross_upper_left'),
       to: _getNode('cross_p_to_a'),
-      weight: _getNode('cross_diagonal_up').distanceTo(_getNode('cross_p_to_a')),
+      weight: _getNode('cross_upper_left').distanceTo(_getNode('cross_p_to_a')),
     ),
     
     // RUTA 4: Diagonal Up → Cruce Centro
@@ -644,13 +620,13 @@ class FloorPlanData {
     // RUTA 5: Diagonal Up → Cruce Upper Left (hacia P-312/LAB B)
     MapEdge(
       from: _getNode('cross_diagonal_up'),
-      to: _getNode('cross_upper_left'),
-      weight: _getNode('cross_diagonal_up').distanceTo(_getNode('cross_upper_left')),
+      to: _getNode('lab_b'),
+      weight: _getNode('cross_diagonal_up').distanceTo(_getNode('lab_b')),
     ),
     MapEdge(
-      from: _getNode('cross_upper_left'),
+      from: _getNode('lab_b'),
       to: _getNode('cross_diagonal_up'),
-      weight: _getNode('cross_upper_left').distanceTo(_getNode('cross_diagonal_up')),
+      weight: _getNode('lab_b').distanceTo(_getNode('cross_diagonal_up')),
     ),
     
     // RUTA 6: Cruce Centro → Cruce Upper Center (hacia Q superior)
@@ -668,13 +644,13 @@ class FloorPlanData {
     // RUTA 7: Cruce Upper Left → Cruce Upper Center (horizontal superior)
     MapEdge(
       from: _getNode('cross_upper_left'),
-      to: _getNode('cross_upper_center'),
-      weight: _getNode('cross_upper_left').distanceTo(_getNode('cross_upper_center')),
+      to: _getNode('cross_diagonal_up'),
+      weight: _getNode('cross_upper_left').distanceTo(_getNode('cross_diagonal_up')),
     ),
     MapEdge(
-      from: _getNode('cross_upper_center'),
+      from: _getNode('cross_diagonal_up'),
       to: _getNode('cross_upper_left'),
-      weight: _getNode('cross_upper_center').distanceTo(_getNode('cross_upper_left')),
+      weight: _getNode('cross_diagonal_up').distanceTo(_getNode('cross_upper_left')),
     ),
     
     // RUTA 8: Cruce Centro → Diagonal Right (hacia Q-307)
