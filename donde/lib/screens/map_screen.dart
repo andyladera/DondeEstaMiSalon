@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import '../models/map_models.dart' as map_models;
 import '../data/floor_plan_data.dart';
+import '../data/mock_schedule_data.dart';
 import '../services/pathfinding_service.dart';
 
 class MapScreen extends StatefulWidget {
@@ -26,6 +27,10 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   map_models.Route? _currentRoute;
   map_models.MapNode? _startNode;
   map_models.MapNode? _destinationNode;
+  
+  // Modo de prueba
+  bool _isTestMode = false;
+  String? _selectedTestLab;
   
   // Animación del recorrido
   AnimationController? _animationController;
@@ -224,10 +229,30 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
             onPressed: _showLocationPicker,
             tooltip: 'Cambiar ubicación',
           ),
+          // Botón para activar modo de prueba
+          IconButton(
+            icon: Icon(_isTestMode ? Icons.bug_report : Icons.bug_report_outlined),
+            onPressed: () {
+              setState(() {
+                _isTestMode = !_isTestMode;
+                if (!_isTestMode) {
+                  _selectedTestLab = null;
+                  _destinationNode = widget.destinationLabCode != null
+                      ? FloorPlanData.getNodeByLabCode(widget.destinationLabCode!)
+                      : null;
+                  _calculateRoute();
+                }
+              });
+            },
+            tooltip: _isTestMode ? 'Desactivar modo prueba' : 'Activar modo prueba',
+          ),
         ],
       ),
       body: Column(
         children: [
+          // Panel de modo de prueba
+          if (_isTestMode) _buildTestModePanel(),
+          
           // Panel de información
           if (_currentRoute != null) _buildInfoPanel(),
           
@@ -458,6 +483,114 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
           ],
         );
       },
+    );
+  }
+
+  Widget _buildTestModePanel() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.orange.shade50,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bug_report, color: Colors.orange),
+              const SizedBox(width: 8),
+              const Text(
+                'Modo de Prueba Activado',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Selecciona un laboratorio para ver su ubicación:',
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: _selectedTestLab,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            hint: const Text('Elige un laboratorio...'),
+            items: MockScheduleData.getAllLabCodes().map((labCode) {
+              final schedule = MockScheduleData.getScheduleForLab(labCode);
+              return DropdownMenuItem<String>(
+                value: labCode,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      labCode,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    if (schedule != null)
+                      Text(
+                        schedule['curso'],
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedTestLab = newValue;
+                  _destinationNode = FloorPlanData.getNodeByLabCode(newValue);
+                  _calculateRoute();
+                  
+                  // Auto-centrar la ruta después de un breve delay
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    _centerRoute();
+                  });
+                });
+              }
+            },
+          ),
+          if (_selectedTestLab != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Mostrando ruta a $_selectedTestLab',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
