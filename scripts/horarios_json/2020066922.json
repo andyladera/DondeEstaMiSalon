@@ -1,0 +1,74 @@
+[
+    {
+        "codigo": "SI-682",
+        "curso": "SISTEMAS OPERATIVOS I",
+        "seccion": "A",
+        "lunes": "",
+        "martes": "20:0021:40",
+        "miércoles": "20:0021:40",
+        "jueves": "18:2020:00",
+        "viernes": "",
+        "sábado": "",
+        "domingo": ""
+    },
+    {
+        "codigo": "SI-785",
+        "curso": "GESTIÓN DE PROYECTOS DE TI",
+        "seccion": "A",
+        "lunes": "17:3019:10",
+        "martes": "",
+        "miércoles": "15:5017:30",
+        "jueves": "16:4018:20",
+        "viernes": "",
+        "sábado": "",
+        "domingo": ""
+    },
+    {
+        "codigo": "SI-881",
+        "curso": "INTELIGENCIA ARTIFICIAL",
+        "seccion": "A",
+        "lunes": "",
+        "martes": "15:0016:40",
+        "miércoles": "",
+        "jueves": "15:0016:40",
+        "viernes": "",
+        "sábado": "",
+        "domingo": ""
+    },
+    {
+        "codigo": "SI-883",
+        "curso": "SOLUCIONES MÓVILES I",
+        "seccion": "A",
+        "lunes": "",
+        "martes": "16:4018:20",
+        "miércoles": "",
+        "jueves": "18:2020:00",
+        "viernes": "16:4018:20",
+        "sábado": "",
+        "domingo": ""
+    },
+    {
+        "codigo": "SI-884",
+        "curso": "ESTADÍSTICA INFERENCIAL Y ANÁLISIS DE DATOS",
+        "seccion": "A",
+        "lunes": "16:4018:20",
+        "martes": "18:2020:00",
+        "miércoles": "",
+        "jueves": "",
+        "viernes": "",
+        "sábado": "",
+        "domingo": ""
+    },
+    {
+        "codigo": "SI-885",
+        "curso": "INTELIGENCIA DE NEGOCIOS",
+        "seccion": "A",
+        "lunes": "",
+        "martes": "20:0021:40",
+        "miércoles": "18:2020:00",
+        "jueves": "20:0021:40",
+        "viernes": "",
+        "sábado": "",
+        "domingo": ""
+    }
+]

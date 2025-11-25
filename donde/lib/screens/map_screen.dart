@@ -211,23 +211,44 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text(
-          widget.destinationLabCode != null
-              ? 'Ruta a ${widget.destinationLabCode}'
-              : 'Mapa - Tercer Nivel',
+        elevation: 0,
+        backgroundColor: const Color(0xFF1976D2),
+        foregroundColor: Colors.white,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.destinationLabCode != null
+                  ? 'Ruta a ${widget.destinationLabCode}'
+                  : 'Mapa - Tercer Nivel',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (widget.destinationLabCode != null)
+              const Text(
+                'Facultad de Ingeniería',
+                style: TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+          ],
         ),
         actions: [
           if (_currentRoute != null)
             IconButton(
-              icon: const Icon(Icons.center_focus_strong),
+              icon: const Icon(Icons.gps_fixed),
               onPressed: _centerRoute,
               tooltip: 'Centrar ruta',
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.2),
+              ),
             ),
           IconButton(
             icon: const Icon(Icons.my_location),
             onPressed: _showLocationPicker,
             tooltip: 'Cambiar ubicación',
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.2),
+            ),
           ),
           // Botón para activar modo de prueba
           IconButton(
@@ -245,6 +266,9 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
               });
             },
             tooltip: _isTestMode ? 'Desactivar modo prueba' : 'Activar modo prueba',
+            style: IconButton.styleFrom(
+              backgroundColor: _isTestMode ? Colors.orange.withOpacity(0.3) : Colors.white.withOpacity(0.2),
+            ),
           ),
         ],
       ),
@@ -253,43 +277,60 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
           // Panel de modo de prueba
           if (_isTestMode) _buildTestModePanel(),
           
-          // Panel de información
+          // Panel de información mejorado
           if (_currentRoute != null) _buildInfoPanel(),
           
-          // Mapa interactivo
+          // Mapa interactivo con borde
           Expanded(
-            child: InteractiveViewer(
-              transformationController: _transformationController,
-              minScale: 0.3,
-              maxScale: 5.0,
-              boundaryMargin: const EdgeInsets.all(200),
-              constrained: false,
-              child: Container(
-                width: _floorPlan.imageWidth,
-                height: _floorPlan.imageHeight,
-                color: Colors.grey.shade100,
-                child: CustomPaint(
-                  size: Size(
-                    _floorPlan.imageWidth,
-                    _floorPlan.imageHeight,
+            child: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
-                  painter: MapPainter(
-                    floorPlan: _floorPlan,
-                    route: _currentRoute,
-                    startNode: _startNode,
-                    destinationNode: _destinationNode,
-                    animationProgress: _animationProgress,
-                    isAnimating: _isAnimating,
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: InteractiveViewer(
+                  transformationController: _transformationController,
+                  minScale: 0.3,
+                  maxScale: 5.0,
+                  boundaryMargin: const EdgeInsets.all(200),
+                  constrained: false,
+                  child: Container(
+                    width: _floorPlan.imageWidth,
+                    height: _floorPlan.imageHeight,
+                    color: Colors.grey.shade100,
+                    child: CustomPaint(
+                      size: Size(
+                        _floorPlan.imageWidth,
+                        _floorPlan.imageHeight,
+                      ),
+                      painter: MapPainter(
+                        floorPlan: _floorPlan,
+                        route: _currentRoute,
+                        startNode: _startNode,
+                        destinationNode: _destinationNode,
+                        animationProgress: _animationProgress,
+                        isAnimating: _isAnimating,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
           
-          // Controles de animación
+          // Controles de animación mejorados
           if (_currentRoute != null) _buildAnimationControls(),
           
-          // Instrucciones
+          // Instrucciones mejoradas
           if (_currentRoute != null && !_isAnimating) _buildInstructions(),
         ],
       ),
@@ -298,23 +339,60 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
 
   Widget _buildInfoPanel() {
     return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       padding: const EdgeInsets.all(16),
-      color: Colors.blue.shade50,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1976D2).withOpacity(0.1),
+            const Color(0xFF2196F3).withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1976D2).withOpacity(0.3)),
+      ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: Colors.blue),
-          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1976D2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.route, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Distancia: ${_currentRoute!.totalDistance.toStringAsFixed(0)} metros',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    const Icon(Icons.straighten, size: 16, color: Color(0xFF1976D2)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Distancia: ${_currentRoute!.totalDistance.toStringAsFixed(0)} metros',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Color(0xFF212121),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  'Tiempo estimado: ${_currentRoute!.estimatedTimeMinutes.toStringAsFixed(1)} minutos',
-                  style: TextStyle(color: Colors.grey.shade700),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 16, color: Color(0xFF1976D2)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Tiempo estimado: ${_currentRoute!.estimatedTimeMinutes.toStringAsFixed(1)} minutos',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -326,13 +404,15 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
 
   Widget _buildAnimationControls() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
             offset: const Offset(0, -2),
           ),
         ],
@@ -341,43 +421,82 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (!_isAnimating && !_animationCompleted) ...[
-            ElevatedButton.icon(
-              onPressed: _startAnimation,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Iniciar Recorrido'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _startAnimation,
+                icon: const Icon(Icons.play_arrow, size: 24),
+                label: const Text(
+                  'Iniciar Recorrido',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1976D2),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ] else if (_isAnimating) ...[
-            ElevatedButton.icon(
-              onPressed: _stopAnimation,
-              icon: const Icon(Icons.pause),
-              label: const Text('Pausar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _stopAnimation,
+                icon: const Icon(Icons.pause, size: 22),
+                label: const Text(
+                  'Pausar',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),
-            ElevatedButton.icon(
-              onPressed: _resetAnimation,
-              icon: const Icon(Icons.restart_alt),
-              label: const Text('Reiniciar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey,
-                foregroundColor: Colors.white,
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _resetAnimation,
+                icon: const Icon(Icons.restart_alt, size: 22),
+                label: const Text(
+                  'Reiniciar',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey.shade700,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: Colors.grey.shade300, width: 2),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ] else if (_animationCompleted) ...[
-            ElevatedButton.icon(
-              onPressed: _resetAnimation,
-              icon: const Icon(Icons.restart_alt),
-              label: const Text('Volver a Simular'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _resetAnimation,
+                icon: const Icon(Icons.replay, size: 24),
+                label: const Text(
+                  'Volver a Simular',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
             ),
           ],
@@ -388,54 +507,113 @@ class _MapScreenState extends State<MapScreen> with SingleTickerProviderStateMix
 
   Widget _buildInstructions() {
     return Container(
-      constraints: const BoxConstraints(maxHeight: 200),
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      constraints: const BoxConstraints(maxHeight: 220),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
             offset: const Offset(0, -2),
           ),
         ],
       ),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _currentRoute!.instructions.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1976D2).withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 24,
-                  height: 24,
-                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
-                    shape: BoxShape.circle,
+                    color: const Color(0xFF1976D2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    '${index + 1}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: const Icon(Icons.list_alt, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    _currentRoute!.instructions[index],
-                    style: const TextStyle(fontSize: 14),
+                const Text(
+                  'Instrucciones de Ruta',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF212121),
                   ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _currentRoute!.instructions.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1976D2), Color(0xFF2196F3)],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1976D2).withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _currentRoute!.instructions[index],
+                          style: const TextStyle(
+                            fontSize: 14,
+                            height: 1.4,
+                            color: Color(0xFF424242),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
